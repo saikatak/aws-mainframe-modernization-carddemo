@@ -1023,10 +1023,25 @@
            .
 
        1000-PROCESS-INPUTS.
-           PERFORM 1100-RECEIVE-MAP
-              THRU 1100-RECEIVE-MAP-EXIT
-           PERFORM 1200-EDIT-MAP-INPUTS
-              THRU 1200-EDIT-MAP-INPUTS-EXIT
+           EXEC CICS READ
+                DATASET   (LIT-CARDXREFNAME-ACCT-PATH)
+                RIDFLD    (WS-CARD-RID-ACCT-ID-X)
+                KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)
+                INTO      (CARD-XREF-RECORD)
+                LENGTH    (LENGTH OF CARD-XREF-RECORD)
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
+           END-EXEC
+           EVALUATE WS-RESP-CD
+               WHEN DFHRESP(NORMAL)
+                     PERFORM 1200-EDIT-MAP-INPUTS
+                        THRU 1200-EDIT-MAP-INPUTS-EXIT
+               WHEN DFHRESP(NOTFND)
+                     PERFORM 1100-RECEIVE-MAP
+                        THRU 1100-RECEIVE-MAP-EXIT                  
+           END-EVALUATE
+
+
            MOVE WS-RETURN-MSG  TO CCARD-ERROR-MSG
            MOVE LIT-THISPGM    TO CCARD-NEXT-PROG
            MOVE LIT-THISMAPSET TO CCARD-NEXT-MAPSET
